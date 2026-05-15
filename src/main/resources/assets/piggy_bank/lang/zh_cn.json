@@ -1,0 +1,28 @@
+{
+  "item.piggy_bank.piggy_bank_spawn_egg": "宝箱猪刷怪蛋",
+  "entity.piggy_bank.piggy_bank": "宝箱猪",
+
+  "piggy_bank.configuration.loots": "掉落物",
+  "piggy_bank.configuration.emeraldDropMax": "每只生物最多掉落的绿宝石数量（0表示无上限）",
+  "piggy_bank.configuration.emeraldPerDamage": "每点伤害掉落的绿宝石数量（例如2.0表示每2点伤害掉落1个）",
+  "piggy_bank.configuration.porkchop": "生肉",
+  "piggy_bank.configuration.porkchopMinDrop": "死亡时最少掉落的生猪肉数量",
+  "piggy_bank.configuration.porkchopMaxDrop": "死亡时最多掉落的生猪肉数量",
+  "piggy_bank.configuration.cooked_porkchop": "熟肉",
+  "piggy_bank.configuration.cookedPorkchopMinDrop": "被火焰击杀时最少掉落的熟猪排数量",
+  "piggy_bank.configuration.cookedPorkchopMaxDrop": "被火焰击杀时最多掉落的熟猪排数量",
+  "piggy_bank.configuration.extra_loot": "额外战利品",
+  "piggy_bank.configuration.lootEnabled": "是否启用额外战利品掉落",
+  "piggy_bank.configuration.lootMinCount": "每次死亡最少掉落的物品种类数",
+  "piggy_bank.configuration.lootMaxCount": "每次死亡最多掉落的物品种类数",
+  "piggy_bank.configuration.lootStackMinSize": "每种物品最少掉落的数量",
+  "piggy_bank.configuration.lootStackMaxSize": "每种物品最多掉落的数量",
+  "piggy_bank.configuration.useWhitelist": "是否使用白名单模式（true=白名单，false=黑名单）",
+  "piggy_bank.configuration.lootWhitelist": "白名单物品ID列表（支持命名空间ID和正则表达式）",
+  "piggy_bank.configuration.lootBlacklist": "黑名单物品ID列表（支持命名空间ID和正则表达式）",
+  "piggy_bank.configuration.world_spawn": "世界生成",
+  "piggy_bank.configuration.spawnEnabled": "是否启用自然生成",
+  "piggy_bank.configuration.spawnWeight": "生成权重（数值越小越稀有）",
+  "piggy_bank.configuration.spawnMinCount": "每次生成最少数量",
+  "piggy_bank.configuration.spawnMaxCount": "每次生成最多数量"
+}

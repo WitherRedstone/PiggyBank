@@ -1,0 +1,17 @@
+{
+  "piggy_bank.hurt1": {
+    "sounds": [
+      "piggy_bank:piggy_bank_hurt1"
+    ]
+  },
+  "piggy_bank.hurt2": {
+    "sounds": [
+      "piggy_bank:piggy_bank_hurt2"
+    ]
+  },
+  "piggy_bank.hurt3": {
+    "sounds": [
+      "piggy_bank:piggy_bank_hurt3"
+    ]
+  }
+}
