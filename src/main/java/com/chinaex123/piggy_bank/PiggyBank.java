@@ -3,6 +3,7 @@ package com.chinaex123.piggy_bank;
 import com.chinaex123.piggy_bank.config.CommonConfig;
 import com.chinaex123.piggy_bank.entity.PiggyBankEntity;
 import com.chinaex123.piggy_bank.entity.client.renderer.PiggyBankRenderer;
+import com.chinaex123.piggy_bank.event.ModEvents;
 import com.chinaex123.piggy_bank.init.ModEntitys;
 import com.chinaex123.piggy_bank.init.ModItems;
 import com.chinaex123.piggy_bank.init.ModSounds;

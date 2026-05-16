@@ -24,5 +24,9 @@
   "piggy_bank.configuration.spawnEnabled": "Enable natural spawning",
   "piggy_bank.configuration.spawnWeight": "Spawn weight (lower value = rarer spawns)",
   "piggy_bank.configuration.spawnMinCount": "Minimum spawn count per group",
-  "piggy_bank.configuration.spawnMaxCount": "Maximum spawn count per group"
+  "piggy_bank.configuration.spawnMaxCount": "Maximum spawn count per group",
+  "piggy_bank.configuration.spawner": "Spawner",
+  "piggy_bank.configuration.disableSpawnerPlacement": "Disable placing spawn eggs in spawners",
+
+  "piggy_bank.message.cannot_place_in_spawner": "§cPiggy Bank cannot be placed in spawners!"
 }

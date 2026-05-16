@@ -32,16 +32,17 @@ public class CommonConfig {
     public static final ModConfigSpec.IntValue SPAWN_MIN_COUNT;
     public static final ModConfigSpec.IntValue SPAWN_MAX_COUNT;
 
+    // 刷怪笼配置
+    public static final ModConfigSpec.BooleanValue DISABLE_SPAWNER_PLACEMENT;
+
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 
         builder.push("loots");
-
         EMERALD_DROP_MAX = builder
                 .translation("piggy_bank.configuration.emeraldDropMax")
                 .comment("Maximum emeralds dropped per entity (0 = unlimited)")
                 .defineInRange("emeraldDropMax", 64, 0, Integer.MAX_VALUE);
-
         EMERALD_PER_DAMAGE = builder
                 .translation("piggy_bank.configuration.emeraldPerDamage")
                 .comment("Emeralds dropped per damage point (e.g., 2.0 = 1 emerald per 2 damage)")
@@ -73,7 +74,6 @@ public class CommonConfig {
 
 
         builder.push("extra_loot");
-
         LOOT_ENABLED = builder
                 .translation("piggy_bank.configuration.lootEnabled")
                 .comment("Enable extra loot drops")
@@ -117,11 +117,9 @@ public class CommonConfig {
                                 ".*boat.*"
                         ),
                         obj -> obj instanceof String);
-
         builder.pop();
 
         builder.push("world_spawn");
-
         SPAWN_ENABLED = builder
                 .translation("piggy_bank.configuration.spawnEnabled")
                 .comment("Enable natural spawning")
@@ -138,7 +136,13 @@ public class CommonConfig {
                 .translation("piggy_bank.configuration.spawnMaxCount")
                 .comment("Maximum spawn count per group")
                 .defineInRange("maxCount", 1, 1, 10);
+        builder.pop();
 
+        builder.push("spawner");
+        DISABLE_SPAWNER_PLACEMENT = builder
+                .translation("piggy_bank.configuration.disableSpawnerPlacement")
+                .comment("Disable placing Piggy Bank spawn eggs in spawners")
+                .define("disableSpawnerPlacement", true);
         builder.pop();
 
         SPEC = builder.build();

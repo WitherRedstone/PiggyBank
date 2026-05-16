@@ -24,5 +24,9 @@
   "piggy_bank.configuration.spawnEnabled": "是否启用自然生成",
   "piggy_bank.configuration.spawnWeight": "生成权重（数值越小越稀有）",
   "piggy_bank.configuration.spawnMinCount": "每次生成最少数量",
-  "piggy_bank.configuration.spawnMaxCount": "每次生成最多数量"
+  "piggy_bank.configuration.spawnMaxCount": "每次生成最多数量",
+  "piggy_bank.configuration.spawner": "刷怪笼",
+  "piggy_bank.configuration.disableSpawnerPlacement": "禁止将刷怪蛋放入刷怪笼",
+
+  "piggy_bank.message.cannot_place_in_spawner": "§c宝箱猪不能放入刷怪笼！"
 }
