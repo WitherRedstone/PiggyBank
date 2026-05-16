@@ -28,6 +28,32 @@ public class LootManager {
     // 编译后的黑名单正则模式列表
     private static List<Pattern> blacklistPatterns = null;
 
+    // 黑名单物品ID（完整匹配）
+    private static final String[] HARDCODED_BLACKLIST_ITEMS = {
+            "minecraft:barrier",
+            "minecraft:command_block",
+            "minecraft:chain_command_block",
+            "minecraft:repeating_command_block",
+            "minecraft:command_block_minecart",
+            "minecraft:jigsaw",
+            "minecraft:structure_block",
+            "minecraft:structure_void",
+            "minecraft:debug_stick",
+            "minecraft:light",
+            "minecraft:painting",
+            "minecraft:budding_amethyst",
+            "minecraft:bedrock",
+            "minecraft:end_portal_frame",
+            "minecraft:vault",
+            "minecraft:spawner"
+    };
+
+    // 黑名单物品ID前缀（包含匹配）
+    private static final String[] HARDCODED_BLACKLIST_PREFIXES = {
+            "spawn_egg",
+            "creative"
+    };
+
     /**
      * 获取随机战利品列表
      * 根据配置生成指定数量和范围的随机物品
@@ -119,6 +145,11 @@ public class LootManager {
         for (Item item : cachedItems) {
             String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
 
+            // 检查硬编码黑名单
+            if (isHardcodedBlacklisted(itemId)) {
+                continue;
+            }
+
             if (useWhitelist) {
                 // 白名单模式：只保留匹配白名单的物品
                 if (matchesAnyPattern(itemId, whitelistPatterns)) {
@@ -141,6 +172,29 @@ public class LootManager {
 
         // 从符合条件的物品中随机选择一个
         return filteredItems.get(RANDOM.nextInt(filteredItems.size()));
+    }
+
+    /**
+     * 检查物品是否在硬编码黑名单中
+     * @param itemId 物品的命名空间ID
+     * @return 如果在黑名单中返回 true
+     */
+    private static boolean isHardcodedBlacklisted(String itemId) {
+        // 检查完整匹配
+        for (String item : HARDCODED_BLACKLIST_ITEMS) {
+            if (itemId.equals(item)) {
+                return true;
+            }
+        }
+
+        // 检查前缀匹配
+        for (String prefix : HARDCODED_BLACKLIST_PREFIXES) {
+            if (itemId.contains(prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

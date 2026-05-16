@@ -40,7 +40,7 @@ public class CommonConfig {
         EMERALD_DROP_MAX = builder
                 .translation("piggy_bank.configuration.emeraldDropMax")
                 .comment("Maximum emeralds dropped per entity (0 = unlimited)")
-                .defineInRange("emeraldDropMax", 0, 0, Integer.MAX_VALUE);
+                .defineInRange("emeraldDropMax", 64, 0, Integer.MAX_VALUE);
 
         EMERALD_PER_DAMAGE = builder
                 .translation("piggy_bank.configuration.emeraldPerDamage")
@@ -113,27 +113,8 @@ public class CommonConfig {
                         "- Regex pattern: .*spawn_egg.* (matches all spawn eggs)")
                 .defineList("blacklist",
                         Arrays.asList(
-                                "minecraft:barrier",
-                                "minecraft:command_block",
-                                "minecraft:chain_command_block",
-                                "minecraft:repeating_command_block",
-                                "minecraft:command_block_minecart",
-                                "minecraft:jigsaw",
-                                "minecraft:structure_block",
-                                "minecraft:structure_void",
-                                "minecraft:debug_stick",
-                                "minecraft:light",
-                                "minecraft:painting",
-                                "minecraft:budding_amethyst",
-                                "minecraft:bedrock",
-                                "minecraft:end_portal_frame",
-                                "minecraft:vault",
-                                "minecraft:spawner",
-
                                 ".*shulker_box",
-                                ".*spawn_egg.*",
-                                ".*boat.*",
-                                ".*creative.*"
+                                ".*boat.*"
                         ),
                         obj -> obj instanceof String);
 

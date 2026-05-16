@@ -4,6 +4,7 @@ import com.chinaex123.piggy_bank.config.CommonConfig;
 import com.chinaex123.piggy_bank.init.ModSounds;
 import com.chinaex123.piggy_bank.util.LootManager;
 import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -63,10 +64,10 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     );
     private static final Random RANDOM = new Random();
 
-    // 声音播放计时器
-    private int idleSoundTimer = 0;      // 待机声音计时器
-    private int walkSoundTimer = 0;      // 行走声音计时器
-    private int panicTimer = 0;          // 恐慌逃跑计时器（控制受伤后的加速持续时间）
+    // 计时器
+    private int idleSoundTimer = 0; // 待机声音计时器
+    private int walkSoundTimer = 0; // 行走声音计时器
+    private int panicTimer = 0; // 恐慌逃跑计时器
     private int totalEmeraldDropped = 0; // 累计掉落的绿宝石数量
 
     /**
@@ -84,9 +85,9 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
      */
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
-                .add(Attributes.MAX_HEALTH, 40.0D)        // 最大生命值
-                .add(Attributes.MOVEMENT_SPEED, 0.35D)    // 基础移动速度
-                .add(Attributes.FOLLOW_RANGE, 16.0D);     // 跟随范围：16格
+                .add(Attributes.MAX_HEALTH, 40.0D) // 最大生命值
+                .add(Attributes.MOVEMENT_SPEED, 0.35D) // 基础移动速度
+                .add(Attributes.FOLLOW_RANGE, 16.0D); // 跟随范围：16格
     }
 
     /**
@@ -127,11 +128,11 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
 
             // 根据恐慌计时器调整移动速度
             if (panicTimer > 0) {
-                // 恐慌逃跑时的速度：0.5（持续10秒）
-                Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.25D);
+                // 恐慌逃跑时的速度
+                Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.45D);
                 panicTimer--;
             } else {
-                // 正常行走速度：0.35
+                // 正常行走速度
                 Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.25D);
             }
 
@@ -217,6 +218,24 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
             }
         }
         super.die(damageSource);
+    }
+
+    /**
+     * 读取 NBT 数据
+     */
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.totalEmeraldDropped = compound.getInt("TotalEmeraldDropped");
+    }
+
+    /**
+     * 写入 NBT 数据
+     */
+    @Override
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("TotalEmeraldDropped", this.totalEmeraldDropped);
     }
 
     /**

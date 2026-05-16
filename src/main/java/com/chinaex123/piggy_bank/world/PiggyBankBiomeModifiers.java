@@ -44,9 +44,9 @@ public class PiggyBankBiomeModifiers {
 
     // 允许生成的群系列表（平原、森林、沼泽）
     private static final List<TagKey<Biome>> SPAWN_BIOMES = List.of(
-            Tags.Biomes.IS_PLAINS,   // 平原类群系
-            Tags.Biomes.IS_FOREST,   // 森林类群系
-            Tags.Biomes.IS_SWAMP     // 沼泽类群系
+            Tags.Biomes.IS_PLAINS, // 平原类群系
+            Tags.Biomes.IS_FOREST, // 森林类群系
+            Tags.Biomes.IS_SWAMP // 沼泽类群系
     );
 
     /**
@@ -76,7 +76,7 @@ public class PiggyBankBiomeModifiers {
 
                     if (shouldSpawn) {
                         // 从配置文件读取生成参数
-                        int weight = CommonConfig.SPAWN_WEIGHT.get();      // 生成权重
+                        int weight = CommonConfig.SPAWN_WEIGHT.get(); // 生成权重
                         int minCount = CommonConfig.SPAWN_MIN_COUNT.get(); // 最小生成数量
                         int maxCount = CommonConfig.SPAWN_MAX_COUNT.get(); // 最大生成数量
 
