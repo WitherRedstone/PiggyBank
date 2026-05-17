@@ -56,11 +56,32 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.piggy_bank.walk");
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.piggy_bank.hurt");
 
-    // 受伤时的随机声音列表（3个不同的受伤音效）
+    // 待机时的随机声音列表
+    private static final List<Supplier<SoundEvent>> IDLE_SOUNDS = Arrays.asList(
+            ModSounds.PIGGY_BANK_IDLE1,
+            ModSounds.PIGGY_BANK_IDLE2,
+            ModSounds.PIGGY_BANK_IDLE3
+    );
+    // 行走时的随机声音列表
+    private static final List<Supplier<SoundEvent>> STEP_SOUNDS = Arrays.asList(
+            ModSounds.PIGGY_BANK_STEP1,
+            ModSounds.PIGGY_BANK_STEP2,
+            ModSounds.PIGGY_BANK_STEP3,
+            ModSounds.PIGGY_BANK_STEP4,
+            ModSounds.PIGGY_BANK_STEP5
+    );
+    // 收到惊吓的随机声音列表
+    private static final List<Supplier<SoundEvent>> JUMP_SOUNDS = Arrays.asList(
+            ModSounds.PIGGY_BANK_JUMP1,
+            ModSounds.PIGGY_BANK_JUMP2
+    );
+    // 受伤时的随机声音列表
     private static final List<Supplier<SoundEvent>> HURT_SOUNDS = Arrays.asList(
-            ModSounds.PIGGY_BANK_HURT_1,
-            ModSounds.PIGGY_BANK_HURT_2,
-            ModSounds.PIGGY_BANK_HURT_3
+            ModSounds.PIGGY_BANK_HURT1,
+            ModSounds.PIGGY_BANK_HURT2,
+            ModSounds.PIGGY_BANK_HURT3,
+            ModSounds.PIGGY_BANK_HURT4,
+            ModSounds.PIGGY_BANK_HURT5
     );
     private static final Random RANDOM = new Random();
 
@@ -68,6 +89,7 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     private int idleSoundTimer = 0; // 待机声音计时器
     private int walkSoundTimer = 0; // 行走声音计时器
     private int panicTimer = 0; // 恐慌逃跑计时器
+    private int jumpSoundCooldown = 0; // 惊吓音效冷却时间
     private int totalEmeraldDropped = 0; // 累计掉落的绿宝石数量
 
     /**
@@ -86,8 +108,8 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0D) // 最大生命值
-                .add(Attributes.MOVEMENT_SPEED, 0.35D) // 基础移动速度
-                .add(Attributes.FOLLOW_RANGE, 16.0D); // 跟随范围：16格
+                .add(Attributes.MOVEMENT_SPEED, 0.25D) // 基础移动速度
+                .add(Attributes.FOLLOW_RANGE, 16.0D); // 跟随范围
     }
 
     /**
@@ -101,7 +123,7 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
         /* 优先级1：被金锭吸引，速度1.2 */
         this.goalSelector.addGoal(1, new TemptGoal(this, 1.2D, stack -> stack.is(Items.GOLD_INGOT), false));
         /* 优先级2：避开玩家，距离8格，快速逃离 */
-        this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 8.0F, 1.5D, 1.5D));
+        this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 8.0F, 1.30, 1.30));
         /* 优先级3：惊慌失措，速度1.0 */
         this.goalSelector.addGoal(3, new PanicGoal(this, 1.0D));
         /* 优先级4：随机走动，避开水，速度0.8 */
@@ -121,15 +143,30 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
         super.aiStep();
 
         if (!this.level().isClientSide) {
-            // 受伤时设置恐慌计时器为 200 tick（10秒）
+            // 检测附近8格内的玩家
+            Player nearestPlayer = this.level().getNearestPlayer(this.getX(), this.getY(), this.getZ(), 8.0D, false);
+
+            // 遇到非创造模式玩家时播放惊吓音效
+            if (nearestPlayer != null && !nearestPlayer.isCreative() && jumpSoundCooldown <= 0) {
+                var jumpSound = JUMP_SOUNDS.get(RANDOM.nextInt(JUMP_SOUNDS.size())).get();
+                this.playSound(jumpSound, 0.8F, 1.0F);
+                jumpSoundCooldown = 100; // 5秒冷却
+                panicTimer = 400; // 设置恐慌计时器
+            }
+
+            if (jumpSoundCooldown > 0) {
+                jumpSoundCooldown--;
+            }
+
+            // 受伤时也设置恐慌计时器
             if (this.hurtTime > 0) {
-                panicTimer = 200;
+                panicTimer = 400;
             }
 
             // 根据恐慌计时器调整移动速度
             if (panicTimer > 0) {
                 // 恐慌逃跑时的速度
-                Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.45D);
+                Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.35D);
                 panicTimer--;
             } else {
                 // 正常行走速度
@@ -141,14 +178,18 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
                 /* 每 20 tick（1秒）播放一次脚步声 */
                 walkSoundTimer++;
                 if (walkSoundTimer >= 20) {
-                    this.playSound(SoundEvents.PIG_STEP, 0.5F, 1.0F);
+                    var stepSound = STEP_SOUNDS.get(RANDOM.nextInt(STEP_SOUNDS.size())).get();
+                    this.playSound(stepSound, 0.5F, 1.0F);
                     walkSoundTimer = 0;
                 }
-            } else {
-                /* 每 80 tick（4秒）播放一次待机声音 */
+            } else if (panicTimer <= 0) {
+                /* 非恐慌状态下，播放待机声音 */
                 idleSoundTimer++;
-                if (idleSoundTimer >= 80) {
-                    this.playSound(SoundEvents.PIG_AMBIENT, 0.5F, 1.0F);
+                if (idleSoundTimer >= 20 * 5) {
+                    var ambientSound = this.getAmbientSound();
+                    if (ambientSound != null) {
+                        this.playSound(ambientSound, 0.5F, 1.0F);
+                    }
                     idleSoundTimer = 0;
                 }
             }

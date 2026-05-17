@@ -1,4 +1,54 @@
 {
+  "piggy_bank.idle1": {
+    "sounds": [
+      "piggy_bank:piggy_bank_idle1"
+    ]
+  },
+  "piggy_bank.idle2": {
+    "sounds": [
+      "piggy_bank:piggy_bank_idle2"
+    ]
+  },
+  "piggy_bank.idle3": {
+    "sounds": [
+      "piggy_bank:piggy_bank_idle3"
+    ]
+  },
+  "piggy_bank.step1": {
+    "sounds": [
+      "piggy_bank:piggy_bank_step1"
+    ]
+  },
+  "piggy_bank.step2": {
+    "sounds": [
+      "piggy_bank:piggy_bank_step2"
+    ]
+  },
+  "piggy_bank.step3": {
+    "sounds": [
+      "piggy_bank:piggy_bank_step3"
+    ]
+  },
+  "piggy_bank.step4": {
+    "sounds": [
+      "piggy_bank:piggy_bank_step4"
+    ]
+  },
+  "piggy_bank.step5": {
+    "sounds": [
+      "piggy_bank:piggy_bank_step5"
+    ]
+  },
+  "piggy_bank.jump1": {
+    "sounds": [
+      "piggy_bank:piggy_bank_jump1"
+    ]
+  },
+  "piggy_bank.jump2": {
+    "sounds": [
+      "piggy_bank:piggy_bank_jump2"
+    ]
+  },
   "piggy_bank.hurt1": {
     "sounds": [
       "piggy_bank:piggy_bank_hurt1"
@@ -12,6 +62,16 @@
   "piggy_bank.hurt3": {
     "sounds": [
       "piggy_bank:piggy_bank_hurt3"
+    ]
+  },
+  "piggy_bank.hurt4": {
+    "sounds": [
+      "piggy_bank:piggy_bank_hurt4"
+    ]
+  },
+  "piggy_bank.hurt5": {
+    "sounds": [
+      "piggy_bank:piggy_bank_hurt5"
     ]
   }
 }
