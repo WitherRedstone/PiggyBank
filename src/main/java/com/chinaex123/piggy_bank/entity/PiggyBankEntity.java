@@ -1,20 +1,24 @@
 package com.chinaex123.piggy_bank.entity;
 
 import com.chinaex123.piggy_bank.config.CommonConfig;
+import com.chinaex123.piggy_bank.entity.ai.AvoidPlayerGoal;
 import com.chinaex123.piggy_bank.init.ModSounds;
 import com.chinaex123.piggy_bank.util.LootManager;
 import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
@@ -22,6 +26,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -35,10 +40,8 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -89,7 +92,6 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     private int idleSoundTimer = 0; // 待机声音计时器
     private int walkSoundTimer = 0; // 行走声音计时器
     private int panicTimer = 0; // 恐慌逃跑计时器
-    private int jumpSoundCooldown = 0; // 惊吓音效冷却时间
     private int totalEmeraldDropped = 0; // 累计掉落的绿宝石数量
 
     /**
@@ -120,12 +122,24 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     protected void registerGoals() {
         /* 优先级0：漂浮在水面 */
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        /* 优先级1：被金锭吸引，速度1.2 */
-        this.goalSelector.addGoal(1, new TemptGoal(this, 1.2D, stack -> stack.is(Items.GOLD_INGOT), false));
-        /* 优先级2：避开玩家，距离8格，快速逃离 */
-        this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 8.0F, 1.30, 1.30));
-        /* 优先级3：惊慌失措，速度1.0 */
-        this.goalSelector.addGoal(3, new PanicGoal(this, 1.0D));
+
+        // 从配置加载驯服物品
+        String itemId = CommonConfig.TAME_ITEM.get();
+        Item tameItem;
+        try {
+            ResourceLocation location = ResourceLocation.parse(itemId);
+            tameItem = BuiltInRegistries.ITEM.get(location);
+        } catch (Exception e) {
+            tameItem = Items.AMETHYST_SHARD;
+        }
+
+        final Item finalTameItem = tameItem;
+        /* 优先级1：被配置的驯服物品吸引，速度1.2 */
+        this.goalSelector.addGoal(1, new TemptGoal(this, 1.2D, stack -> stack.is(finalTameItem), false));
+        /* 优先级2：避开玩家，距离8格，逃跑速度1.35D */
+        this.goalSelector.addGoal(2, new AvoidPlayerGoal(this, 8.0D, 1.35D));
+        /* 优先级3：惊慌失措（受伤时触发） */
+        this.goalSelector.addGoal(3, new PanicGoal(this, 1.35D));
         /* 优先级4：随机走动，避开水，速度0.8 */
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         /* 优先级5：看向附近的生物，距离8格 */
@@ -135,6 +149,30 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     }
 
     /**
+     * 处理玩家与实体的交互逻辑
+     * 主要用于驯服功能：检测玩家是否手持配置的驯服物品并右键点击实体
+     *
+     * @param player 进行交互的玩家
+     * @param hand   交互使用的手（主手或副手）
+     * @return 交互结果，驯服成功返回 SUCCESS，否则返回父类的处理结果
+     */
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        // 获取 AvoidPlayerGoal 实例
+        for (var goal : this.goalSelector.getAvailableGoals()) {
+            if (goal.getGoal() instanceof AvoidPlayerGoal avoidGoal) {
+                if (avoidGoal.tryTame(player)) {
+                    return InteractionResult.sidedSuccess(this.level().isClientSide());
+                }
+                break;
+            }
+        }
+
+        return super.mobInteract(player, hand);
+    }
+
+
+    /**
      * 每 tick 执行的 AI 逻辑
      * 处理受伤加速、声音播放等
      */
@@ -142,40 +180,22 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     public void aiStep() {
         super.aiStep();
 
-        if (!this.level().isClientSide) {
-            // 检测附近8格内的玩家
-            Player nearestPlayer = this.level().getNearestPlayer(this.getX(), this.getY(), this.getZ(), 8.0D, false);
-
-            // 遇到非创造模式玩家时播放惊吓音效
-            if (nearestPlayer != null && !nearestPlayer.isCreative() && jumpSoundCooldown <= 0) {
-                var jumpSound = JUMP_SOUNDS.get(RANDOM.nextInt(JUMP_SOUNDS.size())).get();
-                this.playSound(jumpSound, 0.8F, 1.0F);
-                jumpSoundCooldown = 100; // 5秒冷却
-                panicTimer = 400; // 设置恐慌计时器
-            }
-
-            if (jumpSoundCooldown > 0) {
-                jumpSoundCooldown--;
-            }
-
-            // 受伤时也设置恐慌计时器
+        if (!this.level().isClientSide()) {
+            // 受伤时设置恐慌计时器
             if (this.hurtTime > 0) {
                 panicTimer = 400;
             }
 
             // 根据恐慌计时器调整移动速度
             if (panicTimer > 0) {
-                // 恐慌逃跑时的速度
                 Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.35D);
                 panicTimer--;
             } else {
-                // 正常行走速度
                 Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.25D);
             }
 
             // 播放移动或待机声音
             if (this.isMoving()) {
-                /* 每 20 tick（1秒）播放一次脚步声 */
                 walkSoundTimer++;
                 if (walkSoundTimer >= 20) {
                     var stepSound = STEP_SOUNDS.get(RANDOM.nextInt(STEP_SOUNDS.size())).get();
@@ -183,7 +203,6 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
                     walkSoundTimer = 0;
                 }
             } else if (panicTimer <= 0) {
-                /* 非恐慌状态下，播放待机声音 */
                 idleSoundTimer++;
                 if (idleSoundTimer >= 20 * 5) {
                     var ambientSound = this.getAmbientSound();
@@ -204,17 +223,20 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
      */
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (!this.level().isClientSide && amount > 0) {
-            // 随机播放一个受伤音效
+        if (amount > 0) {
             SoundEvent randomHurt = HURT_SOUNDS.get(RANDOM.nextInt(HURT_SOUNDS.size())).get();
             this.playSound(randomHurt, 0.8F, 1.0F);
 
-            // 检查是否达到上限（0表示无上限）
             boolean hasLimit = CommonConfig.EMERALD_DROP_MAX.get() > 0;
             if (!hasLimit || totalEmeraldDropped < CommonConfig.EMERALD_DROP_MAX.get()) {
-                int emeraldCount = Math.max(1, (int) Math.floor(amount / CommonConfig.EMERALD_PER_DAMAGE.get()));
+                // 使用实际生命值来计算，避免秒杀时掉落过多
+                float healthBefore = this.getHealth();
+                boolean result = super.hurt(source, amount);
+                float healthAfter = this.getHealth();
+                float actualDamage = healthBefore - healthAfter;
 
-                // 如果有上限，确保不超过
+                int emeraldCount = Math.max(1, (int) Math.floor(actualDamage / CommonConfig.EMERALD_PER_DAMAGE.get()));
+
                 if (hasLimit) {
                     int remaining = CommonConfig.EMERALD_DROP_MAX.get() - totalEmeraldDropped;
                     emeraldCount = Math.min(emeraldCount, remaining);
@@ -222,6 +244,8 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
 
                 this.spawnAtLocation(new ItemStack(Items.EMERALD, emeraldCount));
                 totalEmeraldDropped += emeraldCount;
+
+                return result;
             }
         }
         return super.hurt(source, amount);
@@ -253,7 +277,7 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
             this.spawnAtLocation(dropItem);
 
             // 生成额外战利品
-            List<ItemStack> extraLoot = LootManager.getRandomLoot();
+            List<ItemStack> extraLoot = LootManager.getRandomLoot(this.level());
             for (ItemStack loot : extraLoot) {
                 this.spawnAtLocation(loot);
             }
@@ -268,6 +292,28 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
         this.totalEmeraldDropped = compound.getInt("TotalEmeraldDropped");
+
+        // 读取驯服状态
+        long most = compound.contains("TamedByMost") ? compound.getLong("TamedByMost") : 0L;
+        long least = compound.contains("TamedByLeast") ? compound.getLong("TamedByLeast") : 0L;
+
+        if (most != 0 || least != 0) {
+            UUID tamedBy = new UUID(most, least);
+
+            // 应用到 Goal
+            for (var goal : this.goalSelector.getAvailableGoals()) {
+                if (goal.getGoal() instanceof AvoidPlayerGoal avoidGoal) {
+                    try {
+                        Field field = AvoidPlayerGoal.class.getDeclaredField("tamedBy");
+                        field.setAccessible(true);
+                        field.set(avoidGoal, tamedBy);
+                    } catch (Exception e) {
+                        // 忽略异常
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -277,6 +323,18 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         compound.putInt("TotalEmeraldDropped", this.totalEmeraldDropped);
+
+        // 写入驯服状态
+        for (var goal : this.goalSelector.getAvailableGoals()) {
+            if (goal.getGoal() instanceof AvoidPlayerGoal avoidGoal) {
+                UUID tamedBy = avoidGoal.getTamedBy();
+                if (tamedBy != null) {
+                    compound.putLong("TamedByMost", tamedBy.getMostSignificantBits());
+                    compound.putLong("TamedByLeast", tamedBy.getLeastSignificantBits());
+                }
+                break;
+            }
+        }
     }
 
     /**

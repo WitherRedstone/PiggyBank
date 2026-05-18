@@ -1,14 +1,28 @@
 package com.chinaex123.piggy_bank.util;
 
 import com.chinaex123.piggy_bank.config.CommonConfig;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.common.Tags;
+import net.neoforged.neoforge.common.extensions.IHolderExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Pattern;
+
+import static com.chinaex123.piggy_bank.PiggyBank.LOGGER;
 
 /**
  * 战利品管理器
@@ -51,7 +65,8 @@ public class LootManager {
     // 黑名单物品ID前缀（包含匹配）
     private static final String[] HARDCODED_BLACKLIST_PREFIXES = {
             "spawn_egg",
-            "creative"
+            "creative",
+            "music"
     };
 
     /**
@@ -59,7 +74,7 @@ public class LootManager {
      * 根据配置生成指定数量和范围的随机物品
      * @return 战利品物品堆列表
      */
-    public static List<ItemStack> getRandomLoot() {
+    public static List<ItemStack> getRandomLoot(Level level) {
         // 检查是否启用战利品系统
         if (!CommonConfig.LOOT_ENABLED.get()) {
             return new ArrayList<>();
@@ -91,9 +106,32 @@ public class LootManager {
         for (int i = 0; i < dropTypes; i++) {
             Item randomItem = selectRandomItem(useWhitelist);
             if (randomItem != null) {
-                // 在配置范围内随机生成物品数量
                 int stackSize = RANDOM.nextInt(stackMax - stackMin + 1) + stackMin;
-                loot.add(new ItemStack(randomItem, stackSize));
+
+                if (randomItem == Items.ENCHANTED_BOOK) {
+                    // 附魔书特殊处理：每个堆独立附魔
+                    for (int j = 0; j < stackSize; j++) {
+                        ItemStack bookStack = new ItemStack(Items.ENCHANTED_BOOK, 1);
+                        addRandomEnchantment(bookStack, level, true);
+                        loot.add(bookStack);
+                    }
+                } else if (isEnchantableEquipment(new ItemStack(randomItem))) {
+                    // 可附魔装备：每个都独立附魔
+                    for (int j = 0; j < stackSize; j++) {
+                        ItemStack itemStack = new ItemStack(randomItem, 1);
+
+                        // 50% 概率附魔
+                        if (RANDOM.nextBoolean()) {
+                            addRandomEnchantment(itemStack, level, false);
+                        }
+
+                        loot.add(itemStack);
+                    }
+                } else {
+                    // 普通物品：直接堆叠
+                    ItemStack itemStack = new ItemStack(randomItem, stackSize);
+                    loot.add(itemStack);
+                }
             }
         }
 
@@ -210,6 +248,96 @@ public class LootManager {
             }
         }
         return false;
+    }
+
+    /**
+     * 检查物品是否为可附魔的装备
+     * @param itemStack 物品堆
+     * @return 如果是可附魔装备返回 true
+     */
+    private static boolean isEnchantableEquipment(ItemStack itemStack) {
+        // 排除附魔书
+        if (itemStack.is(Items.ENCHANTED_BOOK)) {
+            return false;
+        }
+
+        // 检查是否有附魔能力
+        return itemStack.is(Tags.Items.ENCHANTABLES);
+    }
+
+    /**
+     * 为物品添加随机附魔
+     * @param itemStack 物品堆
+     * @param level 游戏世界
+     * @param isBook 是否为附魔书
+     */
+    private static void addRandomEnchantment(ItemStack itemStack, Level level, boolean isBook) {
+        try {
+            // 获取附魔注册表
+            var enchantmentRegistry = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+
+            // 获取可用于随机战利品的附魔
+            var optional = enchantmentRegistry.get(EnchantmentTags.ON_RANDOM_LOOT);
+
+            List<Holder<Enchantment>> availableEnchantments;
+            availableEnchantments = optional.map(holders -> holders.stream().toList()).orElseGet(() ->
+                    enchantmentRegistry.listElements().map(IHolderExtension::getDelegate).toList());
+
+            if (availableEnchantments.isEmpty()) {
+                return;
+            }
+
+            // 如果不是附魔书，需要过滤出该物品支持的附魔
+            List<Holder<Enchantment>> finalEnchantments = availableEnchantments;
+            if (!isBook) {
+                List<Holder<Enchantment>> compatibleEnchantments = new ArrayList<>();
+                for (Holder<Enchantment> holder : availableEnchantments) {
+                    Enchantment enchantment = holder.value();
+                    if (enchantment.canEnchant(itemStack)) {
+                        compatibleEnchantments.add(holder);
+                    }
+                }
+
+                if (compatibleEnchantments.isEmpty()) {
+                    return;
+                }
+
+                finalEnchantments = compatibleEnchantments;
+            }
+
+            // 随机选择附魔数量
+            int maxEnchants = isBook ? CommonConfig.ENCHANTED_BOOK_MAX_ENCHANTS.get() : CommonConfig.EQUIPMENT_MAX_ENCHANTS.get();
+            int enchantCount = RANDOM.nextInt(maxEnchants) + 1;
+
+            // 使用 Mutable 构建附魔
+            ItemEnchantments.Mutable mutable = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+
+            // 为了避免重复附魔，复制一份可用附魔列表
+            List<Holder<Enchantment>> remainingEnchantments = new ArrayList<>(finalEnchantments);
+
+            for (int i = 0; i < enchantCount && !remainingEnchantments.isEmpty(); i++) {
+                // 随机选择一个附魔
+                int index = RANDOM.nextInt(remainingEnchantments.size());
+                var holder = remainingEnchantments.get(index);
+                var enchantment = holder.value();
+                int enchantLevel = RANDOM.nextInt(enchantment.getMaxLevel()) + 1;
+
+                // 设置附魔
+                mutable.set(holder, enchantLevel);
+
+                // 移除已选的附魔，避免重复
+                remainingEnchantments.remove(index);
+            }
+
+            // 应用到物品
+            if (isBook) {
+                itemStack.set(DataComponents.STORED_ENCHANTMENTS, mutable.toImmutable());
+            } else {
+                itemStack.set(DataComponents.ENCHANTMENTS, mutable.toImmutable());
+            }
+        } catch (Exception e) {
+            LOGGER.error("添加随机附魔失败", e);
+        }
     }
 
     /**

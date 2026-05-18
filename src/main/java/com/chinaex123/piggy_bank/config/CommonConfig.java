@@ -25,6 +25,8 @@ public class CommonConfig {
     public static final ModConfigSpec.ConfigValue<List<? extends String>> LOOT_WHITELIST;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> LOOT_BLACKLIST;
     public static final ModConfigSpec.BooleanValue USE_WHITELIST;
+    public static final ModConfigSpec.IntValue ENCHANTED_BOOK_MAX_ENCHANTS;
+    public static final ModConfigSpec.IntValue EQUIPMENT_MAX_ENCHANTS;
 
     // 世界生成配置
     public static final ModConfigSpec.BooleanValue SPAWN_ENABLED;
@@ -34,6 +36,10 @@ public class CommonConfig {
 
     // 刷怪笼配置
     public static final ModConfigSpec.BooleanValue DISABLE_SPAWNER_PLACEMENT;
+
+    // 驯服配置
+    public static final ModConfigSpec.ConfigValue<String> TAME_ITEM;
+    public static final ModConfigSpec.DoubleValue TAME_SUCCESS_RATE;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -102,7 +108,11 @@ public class CommonConfig {
                 .translation("piggy_bank.configuration.lootWhitelist")
                 .comment("Whitelist item IDs (supports namespace IDs and regex)")
                 .defineList("whitelist",
-                        Arrays.asList("", ""),
+                        Arrays.asList(
+                                "minecraft:enchanted_book",
+                                "minecraft:gold_ingot",
+                                "minecraft:diamond.*"
+                        ),
                         obj -> obj instanceof String);
         LOOT_BLACKLIST = builder
                 .translation("piggy_bank.configuration.lootBlacklist")
@@ -114,9 +124,22 @@ public class CommonConfig {
                 .defineList("blacklist",
                         Arrays.asList(
                                 ".*shulker_box",
-                                ".*boat.*"
+                                ".*boat.*",
+                                ".*harness",
+                                ".*bundle",
+                                ".*bed",
+                                ".*nautilus_armor",
+                                ".*horse_armor"
                         ),
                         obj -> obj instanceof String);
+        ENCHANTED_BOOK_MAX_ENCHANTS = builder
+                .translation("piggy_bank.configuration.enchantedBookMaxEnchants")
+                .comment("Maximum number of enchantments on enchanted books")
+                .defineInRange("enchantedBookMaxEnchants", 5, 1, 10);
+        EQUIPMENT_MAX_ENCHANTS = builder
+                .translation("piggy_bank.configuration.equipmentMaxEnchants")
+                .comment("Maximum number of enchantments on equipment")
+                .defineInRange("equipmentMaxEnchants", 3, 1, 10);
         builder.pop();
 
         builder.push("world_spawn");
@@ -143,6 +166,17 @@ public class CommonConfig {
                 .translation("piggy_bank.configuration.disableSpawnerPlacement")
                 .comment("Disable placing Piggy Bank spawn eggs in spawners")
                 .define("disableSpawnerPlacement", true);
+        builder.pop();
+
+        builder.push("taming");
+        TAME_ITEM = builder
+                .translation("piggy_bank.configuration.tameItem")
+                .comment("Item used to tame the Piggy Bank")
+                .define("tameItem", "minecraft:amethyst_shard");
+        TAME_SUCCESS_RATE = builder
+                .translation("piggy_bank.configuration.tameSuccessRate")
+                .comment("Success rate for taming")
+                .defineInRange("tameSuccessRate", 0.1, 0.0, 1.0);
         builder.pop();
 
         SPEC = builder.build();

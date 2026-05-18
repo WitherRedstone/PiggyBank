@@ -20,6 +20,8 @@
   "piggy_bank.configuration.useWhitelist": "是否使用白名单模式（true=白名单，false=黑名单）",
   "piggy_bank.configuration.lootWhitelist": "白名单物品ID列表（支持命名空间ID和正则表达式）",
   "piggy_bank.configuration.lootBlacklist": "黑名单物品ID列表（支持命名空间ID和正则表达式）",
+  "piggy_bank.configuration.enchantedBookMaxEnchants": "附魔书最大附魔数量",
+  "piggy_bank.configuration.equipmentMaxEnchants": "装备最大附魔数量",
   "piggy_bank.configuration.world_spawn": "世界生成",
   "piggy_bank.configuration.spawnEnabled": "是否启用自然生成",
   "piggy_bank.configuration.spawnWeight": "生成权重（数值越小越稀有）",
@@ -27,6 +29,9 @@
   "piggy_bank.configuration.spawnMaxCount": "每次生成最多数量",
   "piggy_bank.configuration.spawner": "刷怪笼",
   "piggy_bank.configuration.disableSpawnerPlacement": "禁止将刷怪蛋放入刷怪笼",
+  "piggy_bank.configuration.taming": "驯服",
+  "piggy_bank.configuration.tameItem": "用于驯服的物品",
+  "piggy_bank.configuration.tameSuccessRate": "驯服成功率",
 
   "piggy_bank.message.cannot_place_in_spawner": "§c宝箱猪不能放入刷怪笼！"
 }

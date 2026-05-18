@@ -20,6 +20,8 @@
   "piggy_bank.configuration.useWhitelist": "Use whitelist mode (true = whitelist, false = blacklist)",
   "piggy_bank.configuration.lootWhitelist": "Whitelist item IDs (supports namespace IDs and regex)",
   "piggy_bank.configuration.lootBlacklist": "Blacklist item IDs (supports namespace IDs and regex)",
+  "piggy_bank.configuration.enchantedBookMaxEnchants": "Maximum enchantments on enchanted books",
+  "piggy_bank.configuration.equipmentMaxEnchants": "Maximum enchantments on equipment",
   "piggy_bank.configuration.world_spawn": "World Spawn",
   "piggy_bank.configuration.spawnEnabled": "Enable natural spawning",
   "piggy_bank.configuration.spawnWeight": "Spawn weight (lower value = rarer spawns)",
@@ -27,6 +29,9 @@
   "piggy_bank.configuration.spawnMaxCount": "Maximum spawn count per group",
   "piggy_bank.configuration.spawner": "Spawner",
   "piggy_bank.configuration.disableSpawnerPlacement": "Disable placing spawn eggs in spawners",
+  "piggy_bank.configuration.taming": "Taming",
+  "piggy_bank.configuration.tameItem": "Item used to tame the Piggy Bank",
+  "piggy_bank.configuration.tameSuccessRate": "Tame Success Rate",
 
   "piggy_bank.message.cannot_place_in_spawner": "§cPiggy Bank cannot be placed in spawners!"
 }
