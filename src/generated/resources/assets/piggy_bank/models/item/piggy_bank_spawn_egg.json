@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "piggy_bank:item/piggy_bank_spawn_egg"
+  }
+}

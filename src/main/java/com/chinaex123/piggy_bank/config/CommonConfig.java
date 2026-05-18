@@ -1,0 +1,184 @@
+package com.chinaex123.piggy_bank.config;
+
+import net.neoforged.neoforge.common.ModConfigSpec;
+
+import java.util.Arrays;
+import java.util.List;
+
+public class CommonConfig {
+
+    public static final ModConfigSpec SPEC;
+
+    public static final ModConfigSpec.IntValue EMERALD_DROP_MAX;
+    public static final ModConfigSpec.DoubleValue EMERALD_PER_DAMAGE;
+    public static final ModConfigSpec.IntValue PORKCHOP_DROP_MIN;
+    public static final ModConfigSpec.IntValue PORKCHOP_DROP_MAX;
+    public static final ModConfigSpec.IntValue COOKED_PORKCHOP_DROP_MIN;
+    public static final ModConfigSpec.IntValue COOKED_PORKCHOP_DROP_MAX;
+
+    // 战利品配置
+    public static final ModConfigSpec.BooleanValue LOOT_ENABLED;
+    public static final ModConfigSpec.IntValue LOOT_MIN_COUNT;
+    public static final ModConfigSpec.IntValue LOOT_MAX_COUNT;
+    public static final ModConfigSpec.IntValue LOOT_STACK_MIN;
+    public static final ModConfigSpec.IntValue LOOT_STACK_MAX;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> LOOT_WHITELIST;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> LOOT_BLACKLIST;
+    public static final ModConfigSpec.BooleanValue USE_WHITELIST;
+    public static final ModConfigSpec.IntValue ENCHANTED_BOOK_MAX_ENCHANTS;
+    public static final ModConfigSpec.IntValue EQUIPMENT_MAX_ENCHANTS;
+
+    // 世界生成配置
+    public static final ModConfigSpec.BooleanValue SPAWN_ENABLED;
+    public static final ModConfigSpec.IntValue SPAWN_WEIGHT;
+    public static final ModConfigSpec.IntValue SPAWN_MIN_COUNT;
+    public static final ModConfigSpec.IntValue SPAWN_MAX_COUNT;
+
+    // 刷怪笼配置
+    public static final ModConfigSpec.BooleanValue DISABLE_SPAWNER_PLACEMENT;
+
+    // 驯服配置
+    public static final ModConfigSpec.ConfigValue<String> TAME_ITEM;
+    public static final ModConfigSpec.DoubleValue TAME_SUCCESS_RATE;
+
+    static {
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+
+        builder.push("loots");
+        EMERALD_DROP_MAX = builder
+                .translation("piggy_bank.configuration.emeraldDropMax")
+                .comment("Maximum emeralds dropped per entity (0 = unlimited)")
+                .defineInRange("emeraldDropMax", 64, 0, Integer.MAX_VALUE);
+        EMERALD_PER_DAMAGE = builder
+                .translation("piggy_bank.configuration.emeraldPerDamage")
+                .comment("Emeralds dropped per damage point (e.g., 2.0 = 1 emerald per 2 damage)")
+                .defineInRange("emeraldPerDamage", 2.0, 0.5, 10.0);
+
+        builder.push("porkchop");
+        PORKCHOP_DROP_MIN = builder
+                .translation("piggy_bank.configuration.porkchopMinDrop")
+                .comment("Minimum raw porkchops dropped on death")
+                .defineInRange("minDrop", 1, 0, 64);
+        PORKCHOP_DROP_MAX = builder
+                .translation("piggy_bank.configuration.porkchopMaxDrop")
+                .comment("Maximum raw porkchops dropped on death")
+                .defineInRange("maxDrop", 3, 1, 64);
+        builder.pop();
+
+        builder.push("cooked_porkchop");
+        COOKED_PORKCHOP_DROP_MIN = builder
+                .translation("piggy_bank.configuration.cookedPorkchopMinDrop")
+                .comment("Minimum cooked porkchops dropped when killed by fire")
+                .defineInRange("minDrop", 1, 0, 64);
+        COOKED_PORKCHOP_DROP_MAX = builder
+                .translation("piggy_bank.configuration.cookedPorkchopMaxDrop")
+                .comment("Maximum cooked porkchops dropped when killed by fire")
+                .defineInRange("maxDrop", 3, 1, 64);
+        builder.pop();
+
+        builder.pop();
+
+
+        builder.push("extra_loot");
+        LOOT_ENABLED = builder
+                .translation("piggy_bank.configuration.lootEnabled")
+                .comment("Enable extra loot drops")
+                .define("enabled", true);
+        LOOT_MIN_COUNT = builder
+                .translation("piggy_bank.configuration.lootMinCount")
+                .comment("Minimum number of item types dropped per death")
+                .defineInRange("minCount", 1, 1, 1);
+        LOOT_MAX_COUNT = builder
+                .translation("piggy_bank.configuration.lootMaxCount")
+                .comment("Maximum number of item types dropped per death")
+                .defineInRange("maxCount", 8, 1, 120);
+        LOOT_STACK_MIN = builder
+                .translation("piggy_bank.configuration.lootStackMinSize")
+                .comment("Minimum stack size for each dropped item")
+                .defineInRange("stackMinSize", 1, 1, 64);
+        LOOT_STACK_MAX = builder
+                .translation("piggy_bank.configuration.lootStackMaxSize")
+                .comment("Maximum stack size for each dropped item")
+                .defineInRange("stackMaxSize", 4, 1, 64);
+        USE_WHITELIST = builder
+                .translation("piggy_bank.configuration.useWhitelist")
+                .comment("Use whitelist mode (true = whitelist, false = blacklist)")
+                .define("useWhitelist", false);
+        LOOT_WHITELIST = builder
+                .translation("piggy_bank.configuration.lootWhitelist")
+                .comment("Whitelist item IDs (supports namespace IDs and regex)")
+                .defineList("whitelist",
+                        Arrays.asList(
+                                "minecraft:enchanted_book",
+                                "minecraft:gold_ingot",
+                                "minecraft:diamond.*"
+                        ),
+                        obj -> obj instanceof String);
+        LOOT_BLACKLIST = builder
+                .translation("piggy_bank.configuration.lootBlacklist")
+                .comment("Blacklist item IDs (supports namespace IDs and regex)",
+                        "Examples:",
+                        "- Single item: minecraft:barrier",
+                        "- Entire mod: modid:.* (e.g., create:.*)",
+                        "- Regex pattern: .*spawn_egg.* (matches all spawn eggs)")
+                .defineList("blacklist",
+                        Arrays.asList(
+                                ".*shulker_box",
+                                ".*boat.*",
+                                ".*harness",
+                                ".*bundle",
+                                ".*bed",
+                                ".*nautilus_armor",
+                                ".*horse_armor"
+                        ),
+                        obj -> obj instanceof String);
+        ENCHANTED_BOOK_MAX_ENCHANTS = builder
+                .translation("piggy_bank.configuration.enchantedBookMaxEnchants")
+                .comment("Maximum number of enchantments on enchanted books")
+                .defineInRange("enchantedBookMaxEnchants", 4, 1, 10);
+        EQUIPMENT_MAX_ENCHANTS = builder
+                .translation("piggy_bank.configuration.equipmentMaxEnchants")
+                .comment("Maximum number of enchantments on equipment")
+                .defineInRange("equipmentMaxEnchants", 3, 1, 10);
+        builder.pop();
+
+        builder.push("world_spawn");
+        SPAWN_ENABLED = builder
+                .translation("piggy_bank.configuration.spawnEnabled")
+                .comment("Enable natural spawning")
+                .define("enabled", true);
+        SPAWN_WEIGHT = builder
+                .translation("piggy_bank.configuration.spawnWeight")
+                .comment("Spawn weight (lower value = rarer spawns)")
+                .defineInRange("weight", 2, 1, 100);
+        SPAWN_MIN_COUNT = builder
+                .translation("piggy_bank.configuration.spawnMinCount")
+                .comment("Minimum spawn count per group")
+                .defineInRange("minCount", 1, 1, 10);
+        SPAWN_MAX_COUNT = builder
+                .translation("piggy_bank.configuration.spawnMaxCount")
+                .comment("Maximum spawn count per group")
+                .defineInRange("maxCount", 1, 1, 10);
+        builder.pop();
+
+        builder.push("spawner");
+        DISABLE_SPAWNER_PLACEMENT = builder
+                .translation("piggy_bank.configuration.disableSpawnerPlacement")
+                .comment("Disable placing Piggy Bank spawn eggs in spawners")
+                .define("disableSpawnerPlacement", true);
+        builder.pop();
+
+        builder.push("taming");
+        TAME_ITEM = builder
+                .translation("piggy_bank.configuration.tameItem")
+                .comment("Item used to tame the Piggy Bank")
+                .define("tameItem", "minecraft:amethyst_shard");
+        TAME_SUCCESS_RATE = builder
+                .translation("piggy_bank.configuration.tameSuccessRate")
+                .comment("Success rate for taming")
+                .defineInRange("tameSuccessRate", 0.1, 0.0, 1.0);
+        builder.pop();
+
+        SPEC = builder.build();
+    }
+}
