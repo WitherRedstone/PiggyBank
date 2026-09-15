@@ -1,6 +1,6 @@
 package com.chinaex123.piggy_bank.entity.ai;
 
-import com.chinaex123.piggy_bank.config.CommonConfig;
+import com.chinaex123.piggy_bank.config.PBServerConfig;
 import com.chinaex123.piggy_bank.entity.PiggyBankEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -54,7 +54,7 @@ public class AvoidPlayerGoal extends Goal {
      * 从配置加载驯服物品
      */
     private void loadTameItem() {
-        String itemId = CommonConfig.TAME_ITEM.get();
+        String itemId = PBServerConfig.TAME_ITEM.get();
         try {
             ResourceLocation location = ResourceLocation.parse(itemId);
             Item item = BuiltInRegistries.ITEM.get(location);
@@ -207,7 +207,7 @@ public class AvoidPlayerGoal extends Goal {
         }
 
         // 根据配置概率判断是否驯服成功
-        double successRate = CommonConfig.TAME_SUCCESS_RATE.get();
+        double successRate = PBServerConfig.TAME_SUCCESS_RATE.get();
         boolean success = piggyBank.getRandom().nextDouble() < successRate;
 
         if (success) {

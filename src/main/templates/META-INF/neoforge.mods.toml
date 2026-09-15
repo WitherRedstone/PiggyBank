@@ -21,7 +21,6 @@ config="${mod_id}.mixins.json"
     versionRange="[${neo_version},)"
     ordering="NONE"
     side="BOTH"
-
 [[dependencies.${mod_id}]]
     modId="minecraft"
     type="required"

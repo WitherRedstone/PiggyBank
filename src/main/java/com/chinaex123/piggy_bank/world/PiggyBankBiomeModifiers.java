@@ -1,8 +1,8 @@
 package com.chinaex123.piggy_bank.world;
 
 import com.chinaex123.piggy_bank.PiggyBank;
-import com.chinaex123.piggy_bank.config.CommonConfig;
-import com.chinaex123.piggy_bank.init.ModEntitys;
+import com.chinaex123.piggy_bank.config.PBServerConfig;
+import com.chinaex123.piggy_bank.init.PBEntitys;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.BiomeTags;
@@ -65,7 +65,7 @@ public class PiggyBankBiomeModifiers {
             // 只在 ADD 阶段执行
             if (phase == Phase.ADD) {
                 // 检查配置中是否启用了自然生成
-                if (!CommonConfig.SPAWN_ENABLED.get()) {
+                if (!PBServerConfig.SPAWN_ENABLED.get()) {
                     return;
                 }
 
@@ -76,14 +76,14 @@ public class PiggyBankBiomeModifiers {
 
                     if (shouldSpawn) {
                         // 从配置文件读取生成参数
-                        int weight = CommonConfig.SPAWN_WEIGHT.get(); // 生成权重
-                        int minCount = CommonConfig.SPAWN_MIN_COUNT.get(); // 最小生成数量
-                        int maxCount = CommonConfig.SPAWN_MAX_COUNT.get(); // 最大生成数量
+                        int weight = PBServerConfig.SPAWN_WEIGHT.get(); // 生成权重
+                        int minCount = PBServerConfig.SPAWN_MIN_COUNT.get(); // 最小生成数量
+                        int maxCount = PBServerConfig.SPAWN_MAX_COUNT.get(); // 最大生成数量
 
                         // 添加宝箱猪的生成规则到生物群系
                         builder.getMobSpawnSettings().addSpawn(
                                 MobCategory.CREATURE,
-                                new MobSpawnSettings.SpawnerData(ModEntitys.PIGGY_BANK.get(), weight, minCount, maxCount)
+                                new MobSpawnSettings.SpawnerData(PBEntitys.PIGGY_BANK.get(), weight, minCount, maxCount)
                         );
                     }
                 }

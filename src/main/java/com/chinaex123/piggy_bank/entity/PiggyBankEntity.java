@@ -1,8 +1,8 @@
 package com.chinaex123.piggy_bank.entity;
 
-import com.chinaex123.piggy_bank.config.CommonConfig;
+import com.chinaex123.piggy_bank.config.PBServerConfig;
 import com.chinaex123.piggy_bank.entity.ai.AvoidPlayerGoal;
-import com.chinaex123.piggy_bank.init.ModSounds;
+import com.chinaex123.piggy_bank.init.PBSounds;
 import com.chinaex123.piggy_bank.util.LootManager;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -46,7 +46,6 @@ import java.util.function.Supplier;
 
 /**
  * 宝箱猪实体类
- * 使用 GeckoLib 动画系统，具有自定义行为和声音
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
@@ -61,30 +60,30 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
 
     // 待机时的随机声音列表
     private static final List<Supplier<SoundEvent>> IDLE_SOUNDS = Arrays.asList(
-            ModSounds.PIGGY_BANK_IDLE1,
-            ModSounds.PIGGY_BANK_IDLE2,
-            ModSounds.PIGGY_BANK_IDLE3
+            PBSounds.PIGGY_BANK_IDLE1,
+            PBSounds.PIGGY_BANK_IDLE2,
+            PBSounds.PIGGY_BANK_IDLE3
     );
     // 行走时的随机声音列表
     private static final List<Supplier<SoundEvent>> STEP_SOUNDS = Arrays.asList(
-            ModSounds.PIGGY_BANK_STEP1,
-            ModSounds.PIGGY_BANK_STEP2,
-            ModSounds.PIGGY_BANK_STEP3,
-            ModSounds.PIGGY_BANK_STEP4,
-            ModSounds.PIGGY_BANK_STEP5
+            PBSounds.PIGGY_BANK_STEP1,
+            PBSounds.PIGGY_BANK_STEP2,
+            PBSounds.PIGGY_BANK_STEP3,
+            PBSounds.PIGGY_BANK_STEP4,
+            PBSounds.PIGGY_BANK_STEP5
     );
     // 收到惊吓的随机声音列表
     private static final List<Supplier<SoundEvent>> JUMP_SOUNDS = Arrays.asList(
-            ModSounds.PIGGY_BANK_JUMP1,
-            ModSounds.PIGGY_BANK_JUMP2
+            PBSounds.PIGGY_BANK_JUMP1,
+            PBSounds.PIGGY_BANK_JUMP2
     );
     // 受伤时的随机声音列表
     private static final List<Supplier<SoundEvent>> HURT_SOUNDS = Arrays.asList(
-            ModSounds.PIGGY_BANK_HURT1,
-            ModSounds.PIGGY_BANK_HURT2,
-            ModSounds.PIGGY_BANK_HURT3,
-            ModSounds.PIGGY_BANK_HURT4,
-            ModSounds.PIGGY_BANK_HURT5
+            PBSounds.PIGGY_BANK_HURT1,
+            PBSounds.PIGGY_BANK_HURT2,
+            PBSounds.PIGGY_BANK_HURT3,
+            PBSounds.PIGGY_BANK_HURT4,
+            PBSounds.PIGGY_BANK_HURT5
     );
     private static final Random RANDOM = new Random();
 
@@ -124,7 +123,7 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
         this.goalSelector.addGoal(0, new FloatGoal(this));
 
         // 从配置加载驯服物品
-        String itemId = CommonConfig.TAME_ITEM.get();
+        String itemId = PBServerConfig.TAME_ITEM.get();
         Item tameItem;
         try {
             ResourceLocation location = ResourceLocation.parse(itemId);
@@ -227,18 +226,18 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
             SoundEvent randomHurt = HURT_SOUNDS.get(RANDOM.nextInt(HURT_SOUNDS.size())).get();
             this.playSound(randomHurt, 0.8F, 1.0F);
 
-            boolean hasLimit = CommonConfig.EMERALD_DROP_MAX.get() > 0;
-            if (!hasLimit || totalEmeraldDropped < CommonConfig.EMERALD_DROP_MAX.get()) {
+            boolean hasLimit = PBServerConfig.EMERALD_DROP_MAX.get() > 0;
+            if (!hasLimit || totalEmeraldDropped < PBServerConfig.EMERALD_DROP_MAX.get()) {
                 // 使用实际生命值来计算，避免秒杀时掉落过多
                 float healthBefore = this.getHealth();
                 boolean result = super.hurt(source, amount);
                 float healthAfter = this.getHealth();
                 float actualDamage = healthBefore - healthAfter;
 
-                int emeraldCount = Math.max(1, (int) Math.floor(actualDamage / CommonConfig.EMERALD_PER_DAMAGE.get()));
+                int emeraldCount = Math.max(1, (int) Math.floor(actualDamage / PBServerConfig.EMERALD_PER_DAMAGE.get()));
 
                 if (hasLimit) {
-                    int remaining = CommonConfig.EMERALD_DROP_MAX.get() - totalEmeraldDropped;
+                    int remaining = PBServerConfig.EMERALD_DROP_MAX.get() - totalEmeraldDropped;
                     emeraldCount = Math.min(emeraldCount, remaining);
                 }
 
@@ -264,13 +263,13 @@ public class PiggyBankEntity extends AgeableMob implements GeoEntity {
             // 生成固定掉落物
             ItemStack dropItem;
             if (damageSource.is(net.minecraft.tags.DamageTypeTags.IS_FIRE)) {
-                int minDrop = CommonConfig.COOKED_PORKCHOP_DROP_MIN.get();
-                int maxDrop = CommonConfig.COOKED_PORKCHOP_DROP_MAX.get();
+                int minDrop = PBServerConfig.COOKED_PORKCHOP_DROP_MIN.get();
+                int maxDrop = PBServerConfig.COOKED_PORKCHOP_DROP_MAX.get();
                 int dropCount = RANDOM.nextInt(maxDrop - minDrop + 1) + minDrop;
                 dropItem = new ItemStack(Items.COOKED_PORKCHOP, dropCount);
             } else {
-                int minDrop = CommonConfig.PORKCHOP_DROP_MIN.get();
-                int maxDrop = CommonConfig.PORKCHOP_DROP_MAX.get();
+                int minDrop = PBServerConfig.PORKCHOP_DROP_MIN.get();
+                int maxDrop = PBServerConfig.PORKCHOP_DROP_MAX.get();
                 int dropCount = RANDOM.nextInt(maxDrop - minDrop + 1) + minDrop;
                 dropItem = new ItemStack(Items.PORKCHOP, dropCount);
             }
