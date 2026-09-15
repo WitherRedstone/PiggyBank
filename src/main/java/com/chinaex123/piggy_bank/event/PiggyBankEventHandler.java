@@ -1,9 +1,9 @@
 package com.chinaex123.piggy_bank.event;
 
-import com.chinaex123.piggy_bank.config.CommonConfig;
+import com.chinaex123.piggy_bank.config.PBServerConfig;
 import com.chinaex123.piggy_bank.entity.PiggyBankEntity;
 import com.chinaex123.piggy_bank.entity.ai.AvoidPlayerGoal;
-import com.chinaex123.piggy_bank.init.ModSounds;
+import com.chinaex123.piggy_bank.init.PBSounds;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
@@ -79,7 +79,7 @@ public class PiggyBankEventHandler {
 
                 // 播放惊吓音效（带冷却）
                 if (piggyBank.tickCount % 100 == 0) {
-                    var jumpSound = ModSounds.PIGGY_BANK_JUMP1.get();
+                    var jumpSound = PBSounds.PIGGY_BANK_JUMP1.get();
                     piggyBank.playSound(jumpSound, 0.8F, 1.0F);
                 }
             }
@@ -96,7 +96,7 @@ public class PiggyBankEventHandler {
 
         // 缓存驯服物品
         if (cachedTameItem == null) {
-            String itemId = CommonConfig.TAME_ITEM.get();
+            String itemId = PBServerConfig.TAME_ITEM.get();
             try {
                 Identifier location = Identifier.parse(itemId);
                 Item item = BuiltInRegistries.ITEM.getValue(location);

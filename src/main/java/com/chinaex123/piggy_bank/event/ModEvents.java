@@ -1,8 +1,8 @@
 package com.chinaex123.piggy_bank.event;
 
 import com.chinaex123.piggy_bank.PiggyBank;
-import com.chinaex123.piggy_bank.config.CommonConfig;
-import com.chinaex123.piggy_bank.init.ModItems;
+import com.chinaex123.piggy_bank.config.PBServerConfig;
+import com.chinaex123.piggy_bank.init.PBItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,7 +17,7 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        if (!CommonConfig.DISABLE_SPAWNER_PLACEMENT.get()) {
+        if (!PBServerConfig.DISABLE_SPAWNER_PLACEMENT.get()) {
             return;
         }
 
@@ -28,7 +28,7 @@ public class ModEvents {
         BlockPos pos = event.getPos();
         if (event.getLevel().getBlockEntity(pos) instanceof SpawnerBlockEntity) {
             ItemStack itemStack = event.getItemStack();
-            if (itemStack.is(ModItems.PIGGY_BANK_SPAWN_EGG.get())) {
+            if (itemStack.is(PBItems.PIGGY_BANK_SPAWN_EGG.get())) {
                 event.setCanceled(true);
                 if (event.getEntity() instanceof ServerPlayer serverPlayer) {
                     serverPlayer.sendSystemMessage(Component.translatable("piggy_bank.message.cannot_place_in_spawner"));

@@ -1,20 +1,17 @@
 package com.chinaex123.piggy_bank.util;
 
-import com.chinaex123.piggy_bank.config.CommonConfig;
+import com.chinaex123.piggy_bank.config.PBServerConfig;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderSet;
-import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.Tags;
@@ -24,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static com.chinaex123.piggy_bank.PiggyBank.LOGGER;
 
@@ -63,7 +59,9 @@ public class LootManager {
             "minecraft:bedrock",
             "minecraft:end_portal_frame",
             "minecraft:vault",
-            "minecraft:spawner"
+            "minecraft:spawner",
+            "minecraft:knowledge_book",
+            "minecraft:written_book"
     };
 
     // 黑名单物品ID前缀（包含匹配）
@@ -80,7 +78,7 @@ public class LootManager {
      */
     public static List<ItemStack> getRandomLoot(Level level) {
         // 检查是否启用战利品系统
-        if (!CommonConfig.LOOT_ENABLED.get()) {
+        if (!PBServerConfig.LOOT_ENABLED.get()) {
             return new ArrayList<>();
         }
 
@@ -95,16 +93,16 @@ public class LootManager {
         List<ItemStack> loot = new ArrayList<>();
 
         // 获取掉落的物品种类数量范围
-        int minCount = CommonConfig.LOOT_MIN_COUNT.get();
-        int maxCount = CommonConfig.LOOT_MAX_COUNT.get();
+        int minCount = PBServerConfig.LOOT_MIN_COUNT.get();
+        int maxCount = PBServerConfig.LOOT_MAX_COUNT.get();
         int dropTypes = RANDOM.nextInt(maxCount - minCount + 1) + minCount;
 
         // 获取每种物品的堆叠数量范围
-        int stackMin = CommonConfig.LOOT_STACK_MIN.get();
-        int stackMax = CommonConfig.LOOT_STACK_MAX.get();
+        int stackMin = PBServerConfig.LOOT_STACK_MIN.get();
+        int stackMax = PBServerConfig.LOOT_STACK_MAX.get();
 
         // 获取当前使用的过滤模式
-        boolean useWhitelist = CommonConfig.USE_WHITELIST.get();
+        boolean useWhitelist = PBServerConfig.USE_WHITELIST.get();
 
         // 生成指定数量的随机物品
         for (int i = 0; i < dropTypes; i++) {
@@ -130,6 +128,13 @@ public class LootManager {
                         }
 
                         loot.add(itemStack);
+                    }
+                } else if (randomItem == Items.POTION || randomItem == Items.SPLASH_POTION || randomItem == Items.LINGERING_POTION) {
+                    // 药水特殊处理：每个都独立添加随机效果
+                    for (int j = 0; j < stackSize; j++) {
+                        ItemStack potionStack = new ItemStack(randomItem, 1);
+                        addRandomPotionEffect(potionStack, level);
+                        loot.add(potionStack);
                     }
                 } else {
                     // 普通物品：直接堆叠
@@ -160,13 +165,13 @@ public class LootManager {
     private static void compilePatterns() {
         // 编译白名单模式
         whitelistPatterns = new ArrayList<>();
-        for (String pattern : CommonConfig.LOOT_WHITELIST.get()) {
+        for (String pattern : PBServerConfig.LOOT_WHITELIST.get()) {
             whitelistPatterns.add(Pattern.compile(pattern));
         }
 
         // 编译黑名单模式
         blacklistPatterns = new ArrayList<>();
-        for (String pattern : CommonConfig.LOOT_BLACKLIST.get()) {
+        for (String pattern : PBServerConfig.LOOT_BLACKLIST.get()) {
             blacklistPatterns.add(Pattern.compile(pattern));
         }
     }
@@ -189,6 +194,18 @@ public class LootManager {
 
             // 检查硬编码黑名单
             if (isHardcodedBlacklisted(itemId)) {
+                continue;
+            }
+
+            // 检查模组命名空间过滤
+            String namespace = BuiltInRegistries.ITEM.getKey(item).getNamespace();
+            List<? extends String> nsWhitelist = PBServerConfig.MOD_NAMESPACE_WHITELIST.get();
+            List<? extends String> nsBlacklist = PBServerConfig.MOD_NAMESPACE_BLACKLIST.get();
+
+            if (!nsWhitelist.isEmpty() && !nsWhitelist.contains(namespace)) {
+                continue;
+            }
+            if (nsBlacklist.contains(namespace)) {
                 continue;
             }
 
@@ -310,7 +327,7 @@ public class LootManager {
             }
 
             // 随机选择附魔数量
-            int maxEnchants = isBook ? CommonConfig.ENCHANTED_BOOK_MAX_ENCHANTS.get() : CommonConfig.EQUIPMENT_MAX_ENCHANTS.get();
+            int maxEnchants = isBook ? PBServerConfig.ENCHANTED_BOOK_MAX_ENCHANTS.get() : PBServerConfig.EQUIPMENT_MAX_ENCHANTS.get();
             int enchantCount = RANDOM.nextInt(maxEnchants) + 1;
 
             // 使用 Mutable 构建附魔
@@ -341,6 +358,33 @@ public class LootManager {
             }
         } catch (Exception e) {
             LOGGER.error("添加随机附魔失败", e);
+        }
+    }
+
+    /**
+     * 为药水添加随机效果
+     * @param potionStack 药水物品堆
+     * @param level 游戏世界
+     */
+    private static void addRandomPotionEffect(ItemStack potionStack, Level level) {
+        try {
+            // 收集所有非空药水类型
+            List<Potion> availablePotions = new ArrayList<>();
+            for (Potion potion : BuiltInRegistries.POTION) {
+                if (!potion.getEffects().isEmpty()) {
+                    availablePotions.add(potion);
+                }
+            }
+
+            if (availablePotions.isEmpty()) {
+                return;
+            }
+
+            // 随机选择一个药水类型
+            Potion selectedPotion = availablePotions.get(RANDOM.nextInt(availablePotions.size()));
+            potionStack.set(DataComponents.POTION_CONTENTS, new PotionContents(Holder.direct(selectedPotion)));
+        } catch (Exception e) {
+            LOGGER.error("添加随机药水效果失败", e);
         }
     }
 

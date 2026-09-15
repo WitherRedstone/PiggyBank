@@ -1,7 +1,7 @@
 package com.chinaex123.piggy_bank.data;
 
 import com.chinaex123.piggy_bank.PiggyBank;
-import com.chinaex123.piggy_bank.init.ModItems;
+import com.chinaex123.piggy_bank.init.PBItems;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
@@ -16,7 +16,7 @@ public class ModModelsProvider extends ModelProvider {
     @Override
     protected void registerModels(BlockModelGenerators blockModels, ItemModelGenerators itemModels) {
 
-        itemModels.generateFlatItem(ModItems.PIGGY_BANK_SPAWN_EGG.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
+        itemModels.generateFlatItem(PBItems.PIGGY_BANK_SPAWN_EGG.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
 
     }
 }
