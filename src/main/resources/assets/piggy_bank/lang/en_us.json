@@ -1,0 +1,6 @@
+{
+  "item.piggy_bank.piggy_bank_spawn_egg": "Piggy Bank Spawn Egg",
+  "entity.piggy_bank.piggy_bank": "Piggy Bank",
+
+  "piggy_bank.message.cannot_place_in_spawner": "§cPiggy Bank cannot be placed in spawners!"
+}

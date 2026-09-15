@@ -1,0 +1,6 @@
+{
+  "item.piggy_bank.piggy_bank_spawn_egg": "宝箱猪刷怪蛋",
+  "entity.piggy_bank.piggy_bank": "宝箱猪",
+
+  "piggy_bank.message.cannot_place_in_spawner": "§c宝箱猪不能放入刷怪笼！"
+}
